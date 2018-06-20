@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Authentican - Skeleton App</title>
+<!--Custom Theme files-->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<!-- Custom Theme files -->
+<link href="css/app.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+
+	<div class="container mt-5">
+			<div class="row justify-content-center">
+				<div class="card col-sm-8 col-md-6 col-lg-4 mx-auto">
+					<h5 class="card-title my-3 mx-auto">Login</h5>
+	
+					<div class="panel-body">
+						<form class="form-horizontal" method="POST" action="/api/authenticate">
+
+							<div class="form-group">
+									<label for="email" class="control-label">E-Mail Address</label>
+		
+									<div class="">
+										<input id="email" type="email" class="form-control" name="email" required autofocus>
+									</div>
+								</div>
+		
+								<div class="form-group">
+									<label for="password" class="control-label">Password</label>
+		
+									<div class="">
+										<input id="password" type="password" class="form-control" name="password" required>
+									</div>
+								</div>
+	
+							<div class="form-group">
+								<div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" name="remember"> Remember Me
+										</label>
+									</div>
+								</div>
+							</div>
+	
+							<div class="form-group">
+								<div class="col-sm-8 mx-auto text-center">
+									<button type="submit" class="btn btn-primary">
+										Login
+									</button>
+								</div>
+								<div class="text-center">
+									<a class="btn btn-link" href="#">
+										Forgot Your Password?
+									</a>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>		
+	<h1></h1>
+</body>
+</html>
