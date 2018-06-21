@@ -87,7 +87,29 @@ app.get('/register', function(req, res){
 });
 
 app.post('/register', function(req, res){
-	// code to register new user
+	if (req.body.name && req.body.email && req.body.password){
+		var user = new User({
+			name: req.body.name,
+			email : req.body.email,
+			password : bcrypt.hashSync(req.body.password, 10),
+			admin: true
+		});
+
+		user.save(function(err){
+			if (err) throw err;
+
+			console.log('New user saved successfully.');
+			res.json({
+				success: true,
+				user: req.body.name
+			});
+		});
+	} else {
+		res.json({
+			success: false,
+			message : "One or more fields are invalid."
+		})
+	}
 });
 
 // ---------------------------------------------------------
@@ -100,7 +122,42 @@ var apiRoutes = express.Router();
 // ---------------------------------------------------------
 // http://localhost:8080/api/authenticate
 apiRoutes.post('/authenticate', function(req, res) {
-	// find the user with the login info, check password, generate and return msg with token
+
+	// find the user
+	User.findOne({
+		email: req.body.email
+	}, function(err, user) {
+
+		if (err) throw err;
+
+		if (!user) {
+			res.json({ success: false, message: 'Authentication failed. User not found.' });
+		} else if (user) {
+
+			// check if password matches, async
+			bcrypt.compare(req.body.password, user.password, function(err, result){
+
+				if (result) {
+					// if user is found and password is right
+					// create a token
+					var token = generateToken(user)
+	
+					res.json({
+						success: true,
+						message: 'Successfully authenticated.',
+						token: token
+					});
+					
+				} else {
+					res.json({ success: false, message: 'Authentication failed. Wrong password.' });
+				}		
+
+			} )
+			
+
+		}
+
+	});
 });
 
 
@@ -123,21 +180,35 @@ app.get('/logout', function(req, res, next){
 apiRoutes.use(function(req, res, next) {
 
 	// check header or url parameters or post parameters for token
+	var token = req.body.token || req.param('token') || req.headers['x-access-token'];
 
 	// decode token
 	if (token) {
 
-		// verify secret and checks exp
+		// verifies secret and checks exp
+		jwt.verify(token, app.get('superSecret'), function(err, decoded) {			
+			if (err) {
+				return res.json({ success: false, message: 'Failed to authenticate token.' });		
+			} else {
 				// if everything is good, save to request for use in other routes
+				req.decoded = decoded;	
+				console.log(req.decoded);
+				next();
+			}
+		});
+
 	} else {
 
 		// if there is no token
-		// return an error msg
-		// mind the http error code
+		// return an error
+		return res.status(403).send({ 
+			success: false, 
+			message: 'No token provided.'
+		});
+		
 	}
 	
 });
-
 
 /* ---------------------------------------------------------
    authenticated routes
@@ -149,12 +220,13 @@ apiRoutes.use(function(req, res, next) {
 
 /**
  * Validate a given token
- * hitting the endpoint will perform the validation in the middleware above.
- * So only needs the success scenario response.
  * with token as a query param: http://localhost:8080/api/token/validate?token=... 
  */
 apiRoutes.get('/token/validate', function(req, res, next){
-	// success response
+	res.json({
+		success: true,
+		message: 'token valid'
+	})
 });
 
 
@@ -164,8 +236,25 @@ apiRoutes.get('/token/validate', function(req, res, next){
  */
 apiRoutes.get('/token/generate', function(req, res, next){
 
-	// decode user info
-	// if there's such a user, generate and return new token
+	user_name = req.decoded.user;
+	console.log(user_name);
+
+	User.findOne({
+		name: user_name
+	}, function(err, user) {
+
+		if (err) throw err;
+
+		if (!user) {
+			res.json({ success: false, message: 'Authentication failed. User not found.' });
+		} else if (user) {
+			res.json({
+				success: true,
+				message: 'issued new token',
+				token: generateToken(user)
+			});
+		}
+	});
 	
 });
 
@@ -203,8 +292,16 @@ console.log("Server started at http://localhost:" + port)
  * @param {*} user 
  */
 var generateToken = function(user){
+	var payload = {
+		user: user.name,
+		password: user.password, // hashed with salt
+		admin: user.admin,
+		timestamp: Date.now()	
+	}
 
-	// generate signed jwt with user info payload
-	// set expiry time (eg: 10 mins)
-	// return token.
+	var token = jwt.sign(payload, app.get('superSecret'), {
+		expiresIn: 600 // expires in 10 minutes
+	});
+
+	return token;
 }
