@@ -46,7 +46,7 @@ public class UserController {
             cal.roll(Calendar.MINUTE, 1);
 
             //without expiration time
-            jwtToken = Jwts.builder().setSubject(userDTO.getUserName()).claim("roles", "user").setIssuedAt(new Date()).setExpiration(cal.getTime())
+            jwtToken = Jwts.builder().setSubject(userDTO.getUserName()).claim("roles", "user").setIssuedAt(new Date())
                     .signWith(SignatureAlgorithm.HS256, "secretkey").compact();
 
 //            //with expiration time
